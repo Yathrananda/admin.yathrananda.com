@@ -101,6 +101,62 @@ Response:
 }
 ```
 
+#### GET /api/packages/international
+Returns list of international travel packages.
+
+Response:
+```json
+{
+  "packages": [
+    {
+      // Same structure as GET /api/packages response
+    }
+  ]
+}
+```
+
+#### GET /api/packages/domestic
+Returns list of domestic travel packages.
+
+Response:
+```json
+{
+  "packages": [
+    {
+      // Same structure as GET /api/packages response
+    }
+  ]
+}
+```
+
+#### GET /api/packages/trending
+Returns list of trending travel packages.
+
+Response:
+```json
+{
+  "packages": [
+    {
+      // Same structure as GET /api/packages response
+    }
+  ]
+}
+```
+
+#### GET /api/packages/upcoming
+Returns list of upcoming travel packages.
+
+Response:
+```json
+{
+  "packages": [
+    {
+      // Same structure as GET /api/packages response
+    }
+  ]
+}
+```
+
 ### FAQs
 
 #### GET /api/faqs
