@@ -7,6 +7,7 @@ import { Card } from "./card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
 import { Plus, Minus, Upload, Image as ImageIcon, X } from "lucide-react"
 import Image from "next/image"
+import { Checkbox } from "./checkbox"
 
 interface ImageFile {
   file: File | null
@@ -44,6 +45,10 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
     duration: initialData?.duration ?? "",
     location: initialData?.location ?? "",
     groupSize: initialData?.groupSize ?? "",
+    is_trending: initialData?.is_trending ?? false,
+    is_international: initialData?.is_international ?? false,
+    is_domestic: initialData?.is_domestic ?? false,
+    is_upcoming: initialData?.is_upcoming ?? false,
     heroImage: {
       url: initialData?.heroImage?.url ?? "",
       alt: initialData?.heroImage?.alt ?? "",
@@ -214,7 +219,7 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4">
             <div>
               <Label htmlFor="title">Title *</Label>
               <Input
@@ -224,6 +229,7 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
                 required
               />
             </div>
+            
             <div>
               <Label htmlFor="subtitle">Subtitle</Label>
               <Input
@@ -232,98 +238,148 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
                 onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
               />
             </div>
-          </div>
 
-          <div>
-            <Label htmlFor="overview">Overview</Label>
-            <Textarea
-              id="overview"
-              value={formData.overview}
-              onChange={(e) => setFormData({ ...formData, overview: e.target.value })}
-              rows={5}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Price *</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                required
+              <Label htmlFor="overview">Overview</Label>
+              <Textarea
+                id="overview"
+                value={formData.overview}
+                onChange={(e) => setFormData({ ...formData, overview: e.target.value })}
+                rows={4}
               />
             </div>
-            <div>
-              <Label htmlFor="duration">Duration *</Label>
-              <Input
-                id="duration"
-                value={formData.duration}
-                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                placeholder="e.g., 4 Days / 3 Nights"
-                required
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="location">Location *</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="price">Price *</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="duration">Duration *</Label>
+                <Input
+                  id="duration"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="groupSize">Group Size</Label>
-              <Input
-                id="groupSize"
-                value={formData.groupSize}
-                onChange={(e) => setFormData({ ...formData, groupSize: e.target.value })}
-                placeholder="e.g., 2-15 people"
-              />
-            </div>
-          </div>
 
-          <div>
-            <Label htmlFor="heroImage">Hero Image</Label>
-            <div className="space-y-2">
-              {(imagePreview || formData.heroImage.url) && (
-                <div className="relative w-full h-48">
-                  <Image
-                    src={imagePreview || formData.heroImage.url}
-                    alt={formData.heroImage.alt}
-                    fill
-                    className="object-cover rounded-md"
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="location">Location *</Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="groupSize">Group Size</Label>
+                <Input
+                  id="groupSize"
+                  value={formData.groupSize}
+                  onChange={(e) => setFormData({ ...formData, groupSize: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label>Package Type</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="is_trending"
+                    checked={formData.is_trending}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, is_trending: checked as boolean })
+                    }
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleDeleteImage('hero')}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <Label htmlFor="is_trending" className="cursor-pointer">Trending Package</Label>
                 </div>
-              )}
-              <Input
-                id="heroImage"
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleHeroImageChange(e.target.files)}
-              />
-              <Input
-                placeholder="Image alt text"
-                value={formData.heroImage.alt}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  heroImage: { ...formData.heroImage, alt: e.target.value }
-                })}
-              />
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="is_upcoming"
+                    checked={formData.is_upcoming}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, is_upcoming: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="is_upcoming" className="cursor-pointer">Upcoming Tour</Label>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label>Package Category</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="is_domestic"
+                    checked={formData.is_domestic}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, is_domestic: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="is_domestic" className="cursor-pointer">Domestic Package</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="is_international"
+                    checked={formData.is_international}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, is_international: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="is_international" className="cursor-pointer">International Package</Label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="heroImage">Hero Image</Label>
+              <div className="space-y-2">
+                {(imagePreview || formData.heroImage.url) && (
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={imagePreview || formData.heroImage.url}
+                      alt={formData.heroImage.alt}
+                      fill
+                      className="object-cover rounded-md"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => handleDeleteImage('hero')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  id="heroImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleHeroImageChange(e.target.files)}
+                />
+                <Input
+                  placeholder="Image alt text"
+                  value={formData.heroImage.alt}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    heroImage: { ...formData.heroImage, alt: e.target.value }
+                  })}
+                />
+              </div>
             </div>
           </div>
         </TabsContent>

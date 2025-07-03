@@ -11,6 +11,7 @@ import { Plus, Edit, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { PackageForm } from "@/components/ui/package-form"
+import { Badge } from "@/components/ui/badge"
 
 interface TravelPackage {
   id: string
@@ -28,6 +29,10 @@ interface TravelPackage {
   advance_payment?: string
   balance_payment?: string
   created_at: string
+  is_trending: boolean
+  is_international: boolean
+  is_domestic: boolean
+  is_upcoming: boolean
   itinerary?: Array<{
     id: string
     day: number
@@ -176,6 +181,10 @@ export default function PackagesPage() {
         group_size: formData.groupSize,
         advance_payment: formData.bookingInfo.advancePayment,
         balance_payment: formData.bookingInfo.balancePayment,
+        is_trending: formData.is_trending,
+        is_international: formData.is_international,
+        is_domestic: formData.is_domestic,
+        is_upcoming: formData.is_upcoming
       }
 
       let packageId = editingPackage?.id
@@ -393,6 +402,12 @@ export default function PackagesPage() {
                 )}
                 <div className="space-y-2">
                   <h3 className="font-semibold text-lg">{pkg.title}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {pkg.is_trending && <Badge variant="secondary">Trending</Badge>}
+                    {pkg.is_upcoming && <Badge variant="secondary">Upcoming</Badge>}
+                    {pkg.is_domestic && <Badge>Domestic</Badge>}
+                    {pkg.is_international && <Badge>International</Badge>}
+                  </div>
                   <p className="text-sm text-gray-600 line-clamp-2">{pkg.description}</p>
                   <div className="flex justify-between text-sm">
                     <span className="font-medium">₹{pkg.price.toLocaleString()}</span>
