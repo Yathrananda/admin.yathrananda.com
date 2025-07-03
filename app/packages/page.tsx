@@ -153,17 +153,11 @@ export default function PackagesPage() {
   const handleSubmit = async (formData: any) => {
     setUploading(true)
     try {
-      let heroImageUrl = formData.heroImage?.url
       let mainImageUrl = editingPackage?.image_url
 
       // Upload main package image if provided
       if (formData.image) {
         mainImageUrl = await uploadToCloudinary(formData.image)
-      }
-
-      // Upload hero image if provided
-      if (formData.heroImage instanceof File) {
-        heroImageUrl = await uploadToCloudinary(formData.heroImage)
       }
 
       // Create or update the main package
@@ -176,7 +170,7 @@ export default function PackagesPage() {
         duration: formData.duration,
         location: formData.location,
         image_url: mainImageUrl,
-        hero_image_url: heroImageUrl,
+        hero_image_url: mainImageUrl,
         hero_image_alt: formData.heroImage?.alt,
         group_size: formData.groupSize,
         advance_payment: formData.bookingInfo.advancePayment,

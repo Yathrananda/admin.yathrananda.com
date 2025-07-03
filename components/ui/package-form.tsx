@@ -151,7 +151,7 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
       image: file,
       heroImage: {
         ...formData.heroImage,
-        url: imageUrl
+        url: imageUrl,
       }
     })
   }
