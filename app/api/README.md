@@ -109,7 +109,20 @@ Response:
 {
   "packages": [
     {
-      // Same structure as GET /api/packages response
+      "id": "string",
+      "title": "string",
+      "subtitle": "string",
+      "description": "string",
+      "overview": "string",
+      "price": number,
+      "duration": "string",
+      "location": "string",
+      "image_url": "string",
+      "hero_image_url": "string",
+      "hero_image_alt": "string",
+      "group_size": "string",
+      "advance_payment": "string",
+      "balance_payment": "string"
     }
   ]
 }
@@ -123,7 +136,20 @@ Response:
 {
   "packages": [
     {
-      // Same structure as GET /api/packages response
+      "id": "string",
+      "title": "string",
+      "subtitle": "string",
+      "description": "string",
+      "overview": "string",
+      "price": number,
+      "duration": "string",
+      "location": "string",
+      "image_url": "string",
+      "hero_image_url": "string",
+      "hero_image_alt": "string",
+      "group_size": "string",
+      "advance_payment": "string",
+      "balance_payment": "string"
     }
   ]
 }
@@ -137,7 +163,20 @@ Response:
 {
   "packages": [
     {
-      // Same structure as GET /api/packages response
+      "id": "string",
+      "title": "string",
+      "subtitle": "string",
+      "description": "string",
+      "overview": "string",
+      "price": number,
+      "duration": "string",
+      "location": "string",
+      "image_url": "string",
+      "hero_image_url": "string",
+      "hero_image_alt": "string",
+      "group_size": "string",
+      "advance_payment": "string",
+      "balance_payment": "string"
     }
   ]
 }
@@ -151,7 +190,20 @@ Response:
 {
   "packages": [
     {
-      // Same structure as GET /api/packages response
+      "id": "string",
+      "title": "string",
+      "subtitle": "string",
+      "description": "string",
+      "overview": "string",
+      "price": number,
+      "duration": "string",
+      "location": "string",
+      "image_url": "string",
+      "hero_image_url": "string",
+      "hero_image_alt": "string",
+      "group_size": "string",
+      "advance_payment": "string",
+      "balance_payment": "string"
     }
   ]
 }
