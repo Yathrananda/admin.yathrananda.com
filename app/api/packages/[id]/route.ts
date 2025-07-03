@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { authMiddleware } from '../../auth/middleware'
+import { corsMiddleware } from '../../cors/middleware'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  // Handle CORS
+  const corsHeaders = await corsMiddleware(request)
+  if (corsHeaders instanceof NextResponse) {
+    return corsHeaders
+  }
+
   // Check authentication
   const authResponse = await authMiddleware(request)
   if (authResponse) return authResponse
@@ -26,7 +33,10 @@ export async function GET(
     if (!packageData) {
       return NextResponse.json(
         { error: 'Package not found' },
-        { status: 404 }
+        { 
+          status: 404,
+          headers: corsHeaders
+        }
       )
     }
 
@@ -109,6 +119,7 @@ export async function GET(
     }, { 
       status: 200,
       headers: {
+        ...corsHeaders,
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
       }
     })
@@ -117,7 +128,16 @@ export async function GET(
     console.error('Error fetching package details:', error)
     return NextResponse.json(
       { error: 'Failed to fetch package details' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: corsHeaders
+      }
     )
   }
+}
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS(request: NextRequest) {
+  const corsHeaders = await corsMiddleware(request)
+  return corsHeaders instanceof NextResponse ? corsHeaders : new NextResponse(null, { headers: corsHeaders })
 } 
