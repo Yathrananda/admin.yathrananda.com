@@ -1,13 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/ui/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/utils/supabase/client"
@@ -15,16 +10,50 @@ import { uploadToCloudinary } from "@/utils/cloudinary"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { PackageForm } from "@/components/ui/package-form"
 
 interface TravelPackage {
   id: string
   title: string
-  description: string
+  subtitle?: string
+  description?: string
+  overview?: string
   price: number
   duration: string
   location: string
-  image_url: string
+  image_url?: string
+  hero_image_url?: string
+  hero_image_alt?: string
+  group_size?: string
+  advance_payment?: string
+  balance_payment?: string
   created_at: string
+  itinerary?: Array<{
+    id: string
+    day: number
+    title: string
+    route?: string
+    meal_plan?: string
+    notes?: string
+    activities: string[]
+    images: Array<{
+      url: string
+      alt?: string
+    }>
+  }>
+  gallery?: Array<{
+    url: string
+    alt?: string
+    caption?: string
+  }>
+  bookingInfo?: {
+    advancePayment: string
+    balancePayment: string
+    bookingRules: string[]
+  }
+  cancellationPolicy?: {
+    rules: string[]
+  }
 }
 
 export default function PackagesPage() {
@@ -32,14 +61,6 @@ export default function PackagesPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingPackage, setEditingPackage] = useState<TravelPackage | null>(null)
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    price: "",
-    duration: "",
-    location: "",
-    image: null as File | null,
-  })
   const [uploading, setUploading] = useState(false)
   const { toast } = useToast()
   const supabase = createClient()
@@ -50,14 +71,70 @@ export default function PackagesPage() {
 
   const fetchPackages = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: packagesData, error: packagesError } = await supabase
         .from("travel_packages")
         .select("*")
         .order("created_at", { ascending: false })
 
-      if (error) throw error
-      setPackages(data || [])
+      if (packagesError) throw packagesError
+
+      // Fetch related data for each package
+      const packagesWithDetails = await Promise.all(
+        (packagesData || []).map(async (pkg) => {
+          const [
+            { data: itinerary },
+            { data: gallery },
+            { data: bookingRules },
+            { data: cancellationRules },
+          ] = await Promise.all([
+            supabase.from("package_itinerary").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
+            supabase.from("package_gallery").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
+            supabase.from("package_booking_rules").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
+            supabase.from("package_cancellation_rules").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
+          ])
+
+          // Fetch activities and images for each itinerary day
+          const itineraryWithDetails = await Promise.all(
+            (itinerary || []).map(async (day) => {
+              const [{ data: activities }, { data: images }] = await Promise.all([
+                supabase.from("itinerary_activities").select("*").eq("itinerary_id", day.id).order('display_order', { ascending: true }),
+                supabase.from("itinerary_images").select("*").eq("itinerary_id", day.id).order('display_order', { ascending: true }),
+              ])
+
+              return {
+                ...day,
+                activities: activities?.map((a) => a.activity) || [],
+                images: images?.map(img => ({
+                  url: img.url,
+                  alt: img.alt || ""
+                })) || [],
+              }
+            })
+          )
+
+          return {
+            ...pkg,
+            itinerary: itineraryWithDetails || [],
+            gallery: (gallery || []).map(img => ({
+              url: img.url,
+              alt: img.alt || "",
+              caption: img.caption || ""
+            })),
+            bookingInfo: {
+              advancePayment: pkg.advance_payment || "",
+              balancePayment: pkg.balance_payment || "",
+              bookingRules: bookingRules?.map((r) => r.rule) || [""],
+            },
+            cancellationPolicy: {
+              rules: cancellationRules?.map((r) => r.rule) || [""],
+            }
+          }
+        })
+      )
+
+      setPackages(packagesWithDetails)
     } catch (error) {
+      console.error("Error fetching packages:", error)
       toast({
         title: "Error",
         description: "Failed to fetch packages",
@@ -68,67 +145,162 @@ export default function PackagesPage() {
     }
   }
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      price: "",
-      duration: "",
-      location: "",
-      image: null,
-    })
-    setEditingPackage(null)
-  }
-
-  const openEditDialog = (pkg: TravelPackage) => {
-    setEditingPackage(pkg)
-    setFormData({
-      title: pkg.title,
-      description: pkg.description,
-      price: pkg.price.toString(),
-      duration: pkg.duration,
-      location: pkg.location,
-      image: null,
-    })
-    setDialogOpen(true)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.title || !formData.price || !formData.duration || !formData.location) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      })
-      return
-    }
-
+  const handleSubmit = async (formData: any) => {
     setUploading(true)
     try {
-      let imageUrl = editingPackage?.image_url || ""
+      let heroImageUrl = formData.heroImage?.url
+      let mainImageUrl = editingPackage?.image_url
 
+      // Upload main package image if provided
       if (formData.image) {
-        imageUrl = await uploadToCloudinary(formData.image)
+        mainImageUrl = await uploadToCloudinary(formData.image)
       }
 
+      // Upload hero image if provided
+      if (formData.heroImage instanceof File) {
+        heroImageUrl = await uploadToCloudinary(formData.heroImage)
+      }
+
+      // Create or update the main package
       const packageData = {
         title: formData.title,
-        description: formData.description,
-        price: Number.parseFloat(formData.price),
+        subtitle: formData.subtitle,
+        overview: formData.overview,
+        description: formData.overview,
+        price: Number(formData.price),
         duration: formData.duration,
         location: formData.location,
-        image_url: imageUrl,
+        image_url: mainImageUrl,
+        hero_image_url: heroImageUrl,
+        hero_image_alt: formData.heroImage?.alt,
+        group_size: formData.groupSize,
+        advance_payment: formData.bookingInfo.advancePayment,
+        balance_payment: formData.bookingInfo.balancePayment,
       }
 
-      if (editingPackage) {
-        const { error } = await supabase.from("travel_packages").update(packageData).eq("id", editingPackage.id)
+      let packageId = editingPackage?.id
 
+      if (editingPackage) {
+        const { error } = await supabase
+          .from("travel_packages")
+          .update(packageData)
+          .eq("id", editingPackage.id)
         if (error) throw error
       } else {
-        const { error } = await supabase.from("travel_packages").insert([packageData])
-
+        const { data, error } = await supabase
+          .from("travel_packages")
+          .insert([packageData])
+          .select()
         if (error) throw error
+        packageId = data[0].id
+      }
+
+      if (packageId) {
+        // Clear existing related data if updating
+        if (editingPackage) {
+          await Promise.all([
+            supabase.from("package_itinerary").delete().eq("package_id", packageId),
+            supabase.from("package_gallery").delete().eq("package_id", packageId),
+            supabase.from("package_booking_rules").delete().eq("package_id", packageId),
+            supabase.from("package_cancellation_rules").delete().eq("package_id", packageId),
+          ])
+        }
+
+        // Insert itinerary and related data
+        for (const day of formData.itinerary) {
+          const { data: itineraryDay, error: itineraryError } = await supabase
+            .from("package_itinerary")
+            .insert({
+              package_id: packageId,
+              day: day.day,
+              title: day.title,
+              route: day.route,
+              meal_plan: day.mealPlan,
+              notes: day.notes,
+            })
+            .select()
+            .single()
+
+          if (itineraryError) throw itineraryError
+
+          if (itineraryDay) {
+            // Insert activities
+            if (day.activities.length > 0) {
+              const { error: activitiesError } = await supabase.from("itinerary_activities").insert(
+                day.activities.map((activity: string) => ({
+                  itinerary_id: itineraryDay.id,
+                  activity,
+                }))
+              )
+              if (activitiesError) throw activitiesError
+            }
+
+            // Upload and insert itinerary images
+            if (day.images.length > 0) {
+              const uploadedImages = await Promise.all(
+                day.images.map(async (img: { file: File | null, url?: string, alt: string }) => {
+                  let imageUrl = img.url
+                  if (img.file) {
+                    imageUrl = await uploadToCloudinary(img.file)
+                  }
+                  return {
+                    itinerary_id: itineraryDay.id,
+                    url: imageUrl,
+                    alt: img.alt,
+                  }
+                })
+              )
+
+              const { error: imagesError } = await supabase.from("itinerary_images").insert(uploadedImages)
+              if (imagesError) throw imagesError
+            }
+          }
+        }
+
+        // Upload and insert gallery images
+        if (formData.gallery.length > 0) {
+          const uploadedGalleryImages = await Promise.all(
+            formData.gallery.map(async (img: { file: File | null, url?: string, alt: string, caption: string }) => {
+              let imageUrl = img.url
+              if (img.file) {
+                imageUrl = await uploadToCloudinary(img.file)
+              }
+              return {
+                package_id: packageId,
+                url: imageUrl,
+                alt: img.alt,
+                caption: img.caption,
+              }
+            })
+          )
+
+          const { error: galleryError } = await supabase.from("package_gallery").insert(uploadedGalleryImages)
+          if (galleryError) throw galleryError
+        }
+
+        // Insert booking rules
+        if (formData.bookingInfo.bookingRules.length > 0) {
+          const { error: bookingRulesError } = await supabase.from("package_booking_rules").insert(
+            formData.bookingInfo.bookingRules.map((rule: string) => ({
+              package_id: packageId,
+              rule,
+            }))
+          )
+          if (bookingRulesError) throw bookingRulesError
+        }
+
+        // Insert cancellation rules
+        if (formData.cancellationPolicy.rules.length > 0) {
+          const { error: cancellationRulesError } = await supabase
+            .from("package_cancellation_rules")
+            .insert(
+              formData.cancellationPolicy.rules.map((rule: string) => ({
+                package_id: packageId,
+                rule,
+              }))
+            )
+          if (cancellationRulesError) throw cancellationRulesError
+        }
       }
 
       toast({
@@ -137,9 +309,10 @@ export default function PackagesPage() {
       })
 
       setDialogOpen(false)
-      resetForm()
+      setEditingPackage(null)
       fetchPackages()
     } catch (error) {
+      console.error("Error:", error)
       toast({
         title: "Error",
         description: `Failed to ${editingPackage ? "update" : "create"} package`,
@@ -153,7 +326,6 @@ export default function PackagesPage() {
   const deletePackage = async (id: string) => {
     try {
       const { error } = await supabase.from("travel_packages").delete().eq("id", id)
-
       if (error) throw error
 
       toast({
@@ -186,83 +358,20 @@ export default function PackagesPage() {
       <PageHeader title="Travel Packages" description="Manage travel packages">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button onClick={() => setEditingPackage(null)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Package
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingPackage ? "Edit Package" : "Add New Package"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="price">Price *</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="duration">Duration *</Label>
-                  <Input
-                    id="duration"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    placeholder="e.g., 5 days 4 nights"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="location">Location *</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="image">Package Image</Label>
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" disabled={uploading}>
-                  {uploading ? "Saving..." : editingPackage ? "Update" : "Create"}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
+            <PackageForm
+              initialData={editingPackage}
+              onSubmit={handleSubmit}
+              isLoading={uploading}
+            />
           </DialogContent>
         </Dialog>
       </PageHeader>
@@ -274,7 +383,12 @@ export default function PackagesPage() {
               <CardContent className="p-4">
                 {pkg.image_url && (
                   <div className="aspect-video relative mb-4 bg-gray-100 rounded-lg overflow-hidden">
-                    <Image src={pkg.image_url || "/placeholder.svg"} alt={pkg.title} fill className="object-cover" />
+                    <Image
+                      src={pkg.image_url || "/placeholder.svg"}
+                      alt={pkg.title}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 )}
                 <div className="space-y-2">
@@ -286,7 +400,10 @@ export default function PackagesPage() {
                   </div>
                   <p className="text-sm text-gray-600">{pkg.location}</p>
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" size="sm" onClick={() => openEditDialog(pkg)}>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setEditingPackage(pkg)
+                      setDialogOpen(true)
+                    }}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => deletePackage(pkg.id)}>
