@@ -44,7 +44,7 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
     price: initialData?.price ?? "",
     duration: initialData?.duration ?? "",
     location: initialData?.location ?? "",
-    groupSize: initialData?.groupSize ?? "",
+    group_size: initialData?.group_size ?? "",
     is_trending: initialData?.is_trending ?? false,
     is_international: initialData?.is_international ?? false,
     is_domestic: initialData?.is_domestic ?? false,
@@ -282,11 +282,11 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
                 />
               </div>
               <div>
-                <Label htmlFor="groupSize">Group Size</Label>
+                <Label htmlFor="group_size">Group Size</Label>
                 <Input
-                  id="groupSize"
-                  value={formData.groupSize}
-                  onChange={(e) => setFormData({ ...formData, groupSize: e.target.value })}
+                  id="group_size"
+                  value={formData.group_size}
+                  onChange={(e) => setFormData({ ...formData, group_size: e.target.value })}
                 />
               </div>
             </div>

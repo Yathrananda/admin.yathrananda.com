@@ -36,11 +36,11 @@ const items = [
     url: "/testimonials",
     icon: MessageSquare,
   },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Settings",
+  //   url: "/settings",
+  //   icon: Settings,
+  // },
 ]
 
 export function AppSidebar() {

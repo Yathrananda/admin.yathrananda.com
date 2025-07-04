@@ -116,7 +116,7 @@ export default function PackagesPage() {
               }
             })
           )
-
+          console.log(pkg, 'pkg')
           return {
             ...pkg,
             itinerary: itineraryWithDetails || [],
@@ -172,7 +172,7 @@ export default function PackagesPage() {
         image_url: mainImageUrl,
         hero_image_url: mainImageUrl,
         hero_image_alt: formData.heroImage?.alt,
-        group_size: formData.groupSize,
+        group_size: formData.group_size,
         advance_payment: formData.bookingInfo.advancePayment,
         balance_payment: formData.bookingInfo.balancePayment,
         is_trending: formData.is_trending,
