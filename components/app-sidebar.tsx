@@ -1,8 +1,9 @@
 "use client"
 
-import { Home, Package, HelpCircle, MessageSquare, Settings } from "lucide-react"
+import { Home, Package, HelpCircle, MessageSquare, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/use-toast"
 
 import {
   Sidebar,
@@ -45,6 +46,29 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      })
+
+      if (!response.ok) {
+        throw new Error("Logout failed")
+      }
+
+      // Force a hard navigation to the login page
+      window.location.href = "/login"
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+      })
+    }
+  }
 
   return (
     <Sidebar>
@@ -65,6 +89,12 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout}>
+                  <LogOut />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
