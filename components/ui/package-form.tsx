@@ -20,7 +20,7 @@ interface ItineraryDay {
   day: number
   title: string
   route: string
-  mealPlan: string
+  meal_plan: string
   activities: string[]
   notes: string
   images: Array<{ file: File | null, url?: string, alt: string }>
@@ -61,7 +61,7 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
         day: 1,
         title: "",
         route: "",
-        mealPlan: "",
+        meal_plan: "",
         activities: [""],
         notes: "",
         images: [] as Array<{ file: File | null, url?: string, alt: string }>,
@@ -425,9 +425,9 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
                   <div>
                     <Label>Meal Plan</Label>
                     <Input
-                      value={day.mealPlan}
+                      value={day.meal_plan}
                       onChange={(e) =>
-                        updateArrayItem("itinerary", dayIndex, { ...day, mealPlan: e.target.value })
+                        updateArrayItem("itinerary", dayIndex, { ...day, meal_plan: e.target.value })
                       }
                     />
                   </div>
@@ -569,7 +569,7 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
                 day: formData.itinerary.length + 1,
                 title: "",
                 route: "",
-                mealPlan: "",
+                meal_plan: "",
                 activities: [""],
                 notes: "",
                 images: [],

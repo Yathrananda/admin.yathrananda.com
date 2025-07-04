@@ -218,7 +218,7 @@ export default function PackagesPage() {
               day: day.day,
               title: day.title,
               route: day.route,
-              meal_plan: day.mealPlan,
+              meal_plan: day.meal_plan,
               notes: day.notes,
             })
             .select()
