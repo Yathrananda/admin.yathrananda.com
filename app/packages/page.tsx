@@ -28,6 +28,10 @@ interface TravelPackage {
   group_size?: string
   advance_payment?: string
   balance_payment?: string
+  departure_place?: string
+  departure_date?: string
+  departure_type?: string
+  activities_display_type?: string
   created_at: string
   is_trending: boolean
   is_international: boolean
@@ -178,7 +182,11 @@ export default function PackagesPage() {
         is_trending: formData.is_trending,
         is_international: formData.is_international,
         is_domestic: formData.is_domestic,
-        is_upcoming: formData.is_upcoming
+        is_upcoming: formData.is_upcoming,
+        departure_place: formData.departure_place,
+        departure_date: formData.departure_date,
+        departure_type: formData.departure_type,
+        activities_display_type: formData.activities_display_type
       }
 
       let packageId = editingPackage?.id
@@ -408,6 +416,17 @@ export default function PackagesPage() {
                     <span className="text-gray-600">{pkg.duration}</span>
                   </div>
                   <p className="text-sm text-gray-600">{pkg.location}</p>
+                  {pkg.departure_place && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Departure:</span> {pkg.departure_place}
+                      {pkg.departure_date && (
+                        <span> • {new Date(pkg.departure_date).toLocaleDateString()}</span>
+                      )}
+                      {pkg.departure_type && (
+                        <span> • {pkg.departure_type.charAt(0).toUpperCase() + pkg.departure_type.slice(1)}</span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex gap-2 pt-2">
                     <Button variant="outline" size="sm" onClick={() => {
                       setEditingPackage(pkg)

@@ -35,7 +35,11 @@ export async function GET(request: NextRequest) {
         hero_image_alt,
         group_size,
         advance_payment,
-        balance_payment
+        balance_payment,
+        departure_place,
+        departure_date,
+        departure_type,
+        activities_display_type
       `)
       .order('created_at', { ascending: false })
 

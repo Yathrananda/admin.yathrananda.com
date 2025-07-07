@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
 import { Plus, Minus, Upload, Image as ImageIcon, X } from "lucide-react"
 import Image from "next/image"
 import { Checkbox } from "./checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select"
 
 interface ImageFile {
   file: File | null
@@ -49,6 +50,15 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
     is_international: initialData?.is_international ?? false,
     is_domestic: initialData?.is_domestic ?? false,
     is_upcoming: initialData?.is_upcoming ?? false,
+    
+    // Departure Details
+    departure_place: initialData?.departure_place ?? "",
+    departure_date: initialData?.departure_date ?? "",
+    departure_type: initialData?.departure_type ?? "plane",
+    
+    // Activities Display
+    activities_display_type: initialData?.activities_display_type ?? "points",
+    
     heroImage: {
       url: initialData?.heroImage?.url ?? "",
       alt: initialData?.heroImage?.alt ?? "",
@@ -288,6 +298,67 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
                   value={formData.group_size}
                   onChange={(e) => setFormData({ ...formData, group_size: e.target.value })}
                 />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label>Departure Details</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="departure_place">Departure Place</Label>
+                  <Input
+                    id="departure_place"
+                    value={formData.departure_place}
+                    onChange={(e) => setFormData({ ...formData, departure_place: e.target.value })}
+                    placeholder="e.g., Delhi, Mumbai"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="departure_date">Departure Date</Label>
+                  <Input
+                    id="departure_date"
+                    type="date"
+                    value={formData.departure_date}
+                    onChange={(e) => setFormData({ ...formData, departure_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="departure_type">Departure Type</Label>
+                  <Select
+                    value={formData.departure_type}
+                    onValueChange={(value) => setFormData({ ...formData, departure_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plane">Plane</SelectItem>
+                      <SelectItem value="train">Train</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label>Activities Display</Label>
+              <div>
+                <Label htmlFor="activities_display_type">Display Format</Label>
+                <Select
+                  value={formData.activities_display_type}
+                  onValueChange={(value) => setFormData({ ...formData, activities_display_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select display format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="points">Bullet Points</SelectItem>
+                    <SelectItem value="description">Description</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Choose how activities will be displayed in the itinerary
+                </p>
               </div>
             </div>
 
