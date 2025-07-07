@@ -39,7 +39,9 @@ export async function GET(request: NextRequest) {
         departure_place,
         departure_date,
         departure_type,
-        activities_display_type
+        activities_display_type,
+        is_kerala_tours,
+        is_customized_tours
       `)
       .order('created_at', { ascending: false })
 

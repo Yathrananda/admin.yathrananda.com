@@ -50,6 +50,8 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
     is_international: initialData?.is_international ?? false,
     is_domestic: initialData?.is_domestic ?? false,
     is_upcoming: initialData?.is_upcoming ?? false,
+    is_kerala_tours: initialData?.is_kerala_tours ?? false,
+    is_customized_tours: initialData?.is_customized_tours ?? false,
     
     // Departure Details
     departure_place: initialData?.departure_place ?? "",
@@ -410,6 +412,26 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
                     }
                   />
                   <Label htmlFor="is_international" className="cursor-pointer">International Package</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="is_kerala_tours"
+                    checked={formData.is_kerala_tours}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, is_kerala_tours: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="is_kerala_tours" className="cursor-pointer">Kerala Tours</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="is_customized_tours"
+                    checked={formData.is_customized_tours}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, is_customized_tours: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="is_customized_tours" className="cursor-pointer">Customized Tours</Label>
                 </div>
               </div>
             </div>

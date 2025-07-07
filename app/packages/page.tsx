@@ -37,6 +37,8 @@ interface TravelPackage {
   is_international: boolean
   is_domestic: boolean
   is_upcoming: boolean
+  is_kerala_tours: boolean
+  is_customized_tours: boolean
   itinerary?: Array<{
     id: string
     day: number
@@ -183,6 +185,8 @@ export default function PackagesPage() {
         is_international: formData.is_international,
         is_domestic: formData.is_domestic,
         is_upcoming: formData.is_upcoming,
+        is_kerala_tours: formData.is_kerala_tours,
+        is_customized_tours: formData.is_customized_tours,
         departure_place: formData.departure_place,
         departure_date: formData.departure_date,
         departure_type: formData.departure_type,
@@ -409,6 +413,8 @@ export default function PackagesPage() {
                     {pkg.is_upcoming && <Badge variant="secondary">Upcoming</Badge>}
                     {pkg.is_domestic && <Badge>Domestic</Badge>}
                     {pkg.is_international && <Badge>International</Badge>}
+                    {pkg.is_kerala_tours && <Badge variant="outline">Kerala Tours</Badge>}
+                    {pkg.is_customized_tours && <Badge variant="outline">Customized Tours</Badge>}
                   </div>
                   <p className="text-sm text-gray-600 line-clamp-2">{pkg.description}</p>
                   <div className="flex justify-between text-sm">
