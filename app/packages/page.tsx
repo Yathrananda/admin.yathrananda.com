@@ -188,7 +188,7 @@ export default function PackagesPage() {
         is_kerala_tours: formData.is_kerala_tours,
         is_customized_tours: formData.is_customized_tours,
         departure_place: formData.departure_place,
-        departure_date: formData.departure_date,
+        departure_date: formData.departure_date || null,
         departure_type: formData.departure_type,
         activities_display_type: formData.activities_display_type
       }

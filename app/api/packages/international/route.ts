@@ -37,7 +37,13 @@ export async function GET(request: NextRequest) {
         advance_payment,
         balance_payment,
         is_trending,
-        is_upcoming
+        is_upcoming,
+        is_kerala_tours,
+        is_customized_tours,
+        departure_place,
+        departure_date,
+        departure_type,
+        activities_display_type
       `)
       .eq('is_international', true)
       .order('created_at', { ascending: false })
