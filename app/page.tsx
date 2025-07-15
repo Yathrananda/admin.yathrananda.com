@@ -27,6 +27,7 @@ export default function HeroPage() {
   const [heroMedia, setHeroMedia] = useState<HeroMedia[]>([])
   const [activeMedia, setActiveMedia] = useState<HeroMedia[]>([])
   const [uploading, setUploading] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [replacingId, setReplacingId] = useState<string | null>(null)
   const { toast } = useToast()
@@ -200,6 +201,7 @@ export default function HeroPage() {
   }
 
   const deleteMedia = async (id: string) => {
+    setDeleting(id)
     try {
       // First, get the media item to get the URL
       const { data: mediaItem, error: fetchError } = await supabase
@@ -236,6 +238,8 @@ export default function HeroPage() {
         description: "Failed to delete media",
         variant: "destructive",
       })
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -291,7 +295,7 @@ export default function HeroPage() {
                       <Plus className="h-4 w-4 mr-1" />
                       Add to Carousel
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => deleteMedia(media.id)}>
+                    <Button variant="outline" size="sm" onClick={() => deleteMedia(media.id)} disabled={deleting === media.id}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
