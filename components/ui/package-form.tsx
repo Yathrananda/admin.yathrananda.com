@@ -9,6 +9,7 @@ import { Plus, Minus, Upload, Image as ImageIcon, X } from "lucide-react"
 import Image from "next/image"
 import { Checkbox } from "./checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select"
+import { TestimonialSelector } from "./testimonial-selector"
 
 interface ImageFile {
   file: File | null
@@ -111,6 +112,9 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
         ? initialData.cancellationPolicy.rules
         : [""],
     },
+
+    // Testimonials
+    testimonials: initialData?.testimonials?.map((t: any) => t.id) || [],
   })
 
   useEffect(() => {
@@ -237,12 +241,13 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
           <TabsTrigger value="booking">Booking</TabsTrigger>
           <TabsTrigger value="cancellation">Cancellation</TabsTrigger>
+          <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4">
@@ -910,6 +915,15 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
               <Plus className="h-4 w-4 mr-2" /> Add Rule
             </Button>
           </div>
+        </TabsContent>
+
+        <TabsContent value="testimonials" className="space-y-4">
+          <TestimonialSelector
+            selectedTestimonials={formData.testimonials}
+            onSelectionChange={(testimonialIds) =>
+              setFormData({ ...formData, testimonials: testimonialIds })
+            }
+          />
         </TabsContent>
       </Tabs>
 

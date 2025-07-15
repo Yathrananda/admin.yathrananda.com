@@ -65,6 +65,12 @@ interface TravelPackage {
   cancellationPolicy?: {
     rules: string[]
   }
+  testimonials?: Array<{
+    id: string
+    client_name: string
+    message: string
+    image_url?: string
+  }>
 }
 
 export default function PackagesPage() {
@@ -97,11 +103,13 @@ export default function PackagesPage() {
             { data: gallery },
             { data: bookingRules },
             { data: cancellationRules },
+            { data: packageTestimonials },
           ] = await Promise.all([
             supabase.from("package_itinerary").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
             supabase.from("package_gallery").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
             supabase.from("package_booking_rules").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
             supabase.from("package_cancellation_rules").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
+            supabase.from("package_testimonials").select("testimonial_id").eq("package_id", pkg.id),
           ])
 
           // Fetch activities and images for each itinerary day
@@ -122,6 +130,22 @@ export default function PackagesPage() {
               }
             })
           )
+          // Fetch testimonial details for selected testimonials
+          let testimonials: Array<{
+            id: string
+            client_name: string
+            message: string
+            image_url?: string
+          }> = []
+          if (packageTestimonials && packageTestimonials.length > 0) {
+            const testimonialIds = packageTestimonials.map(pt => pt.testimonial_id)
+            const { data: testimonialData } = await supabase
+              .from("testimonials")
+              .select("id, client_name, message, image_url")
+              .in("id", testimonialIds)
+            testimonials = testimonialData || []
+          }
+
           console.log(pkg, 'pkg')
           return {
             ...pkg,
@@ -138,7 +162,8 @@ export default function PackagesPage() {
             },
             cancellationPolicy: {
               rules: cancellationRules?.map((r) => r.rule) || [""],
-            }
+            },
+            testimonials: testimonials
           }
         })
       )
@@ -228,6 +253,7 @@ export default function PackagesPage() {
             supabase.from("package_gallery").delete().eq("package_id", packageId),
             supabase.from("package_booking_rules").delete().eq("package_id", packageId),
             supabase.from("package_cancellation_rules").delete().eq("package_id", packageId),
+            supabase.from("package_testimonials").delete().eq("package_id", packageId),
           ])
         }
 
@@ -325,6 +351,19 @@ export default function PackagesPage() {
               }))
             )
           if (cancellationRulesError) throw cancellationRulesError
+        }
+
+        // Insert package testimonials
+        if (formData.testimonials && formData.testimonials.length > 0) {
+          const { error: testimonialsError } = await supabase
+            .from("package_testimonials")
+            .insert(
+              formData.testimonials.map((testimonialId: string) => ({
+                package_id: packageId,
+                testimonial_id: testimonialId,
+              }))
+            )
+          if (testimonialsError) throw testimonialsError
         }
       }
 
@@ -495,6 +534,11 @@ export default function PackagesPage() {
                       {pkg.departure_type && (
                         <span> • {pkg.departure_type.charAt(0).toUpperCase() + pkg.departure_type.slice(1)}</span>
                       )}
+                    </div>
+                  )}
+                  {pkg.testimonials && pkg.testimonials.length > 0 && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Testimonials:</span> {pkg.testimonials.length} selected
                     </div>
                   )}
                   <div className="flex gap-2 pt-2">
