@@ -36,6 +36,7 @@ interface PackageFormProps {
 export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormProps) {
   const [activeTab, setActiveTab] = useState("basic")
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [deletedImages, setDeletedImages] = useState<string[]>([])
   
   const [formData, setFormData] = useState({
     // Basic Info
@@ -126,7 +127,7 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await onSubmit(formData)
+    await onSubmit({ ...formData, deletedImages })
   }
 
   // Helper functions for array fields
@@ -202,6 +203,10 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
   // Handle image deletion
   const handleDeleteImage = (type: 'hero' | 'itinerary' | 'gallery', dayIndex?: number, imageIndex?: number) => {
     if (type === 'hero') {
+      // Track the deleted hero image URL
+      if (formData.heroImage.url && !formData.heroImage.url.startsWith('blob:')) {
+        setDeletedImages(prev => [...prev, formData.heroImage.url!])
+      }
       setImagePreview(null)
       setFormData({
         ...formData,
@@ -209,10 +214,20 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
         heroImage: { url: "", alt: "" }
       })
     } else if (type === 'itinerary' && dayIndex !== undefined && imageIndex !== undefined) {
+      const currentImage = formData.itinerary[dayIndex].images[imageIndex]
+      // Track the deleted itinerary image URL
+      if (currentImage.url && !currentImage.url.startsWith('blob:')) {
+        setDeletedImages(prev => [...prev, currentImage.url!])
+      }
       const newItinerary = [...formData.itinerary]
       newItinerary[dayIndex].images[imageIndex] = { file: null, url: "", alt: "" }
       setFormData({ ...formData, itinerary: newItinerary })
     } else if (type === 'gallery' && imageIndex !== undefined) {
+      const currentImage = formData.gallery[imageIndex]
+      // Track the deleted gallery image URL
+      if (currentImage.url && !currentImage.url.startsWith('blob:')) {
+        setDeletedImages(prev => [...prev, currentImage.url!])
+      }
       const newGallery = [...formData.gallery]
       newGallery[imageIndex] = { file: null, url: "", alt: "", caption: "" }
       setFormData({ ...formData, gallery: newGallery })

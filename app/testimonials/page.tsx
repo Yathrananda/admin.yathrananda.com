@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/ui/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/utils/supabase/client"
-import { uploadToCloudinary } from "@/utils/cloudinary"
+import { uploadToCloudinary, deleteFromCloudinary } from "@/utils/cloudinary"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -92,6 +92,12 @@ export default function TestimonialsPage() {
     setSaving(true)
     try {
       let imageUrl = editingTestimonial?.image_url || ""
+      let oldImageUrl = ""
+
+      // If editing and there's a new image, store the old URL for deletion
+      if (editingTestimonial?.image_url && formData.image) {
+        oldImageUrl = editingTestimonial.image_url
+      }
 
       if (formData.image) {
         imageUrl = await uploadToCloudinary(formData.image)
@@ -107,6 +113,16 @@ export default function TestimonialsPage() {
         const { error } = await supabase.from("testimonials").update(testimonialData).eq("id", editingTestimonial.id)
 
         if (error) throw error
+
+        // Delete the old image from Cloudinary if it was replaced
+        if (oldImageUrl) {
+          try {
+            await deleteFromCloudinary(oldImageUrl)
+          } catch (cloudinaryError) {
+            console.error('Failed to delete old image from Cloudinary:', cloudinaryError)
+            // Don't fail the entire operation if Cloudinary deletion fails
+          }
+        }
       } else {
         const { error } = await supabase.from("testimonials").insert([testimonialData])
 
@@ -134,9 +150,29 @@ export default function TestimonialsPage() {
 
   const deleteTestimonial = async (id: string) => {
     try {
+      // First, get the testimonial to get the image URL
+      const { data: testimonial, error: fetchError } = await supabase
+        .from("testimonials")
+        .select("image_url")
+        .eq("id", id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Delete from database
       const { error } = await supabase.from("testimonials").delete().eq("id", id)
 
       if (error) throw error
+
+      // Delete image from Cloudinary if it exists
+      if (testimonial?.image_url) {
+        try {
+          await deleteFromCloudinary(testimonial.image_url)
+        } catch (cloudinaryError) {
+          console.error('Failed to delete image from Cloudinary:', cloudinaryError)
+          // Don't fail the entire operation if Cloudinary deletion fails
+        }
+      }
 
       toast({
         title: "Success",

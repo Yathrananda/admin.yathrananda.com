@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/ui/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/utils/supabase/client"
-import { uploadToCloudinary } from "@/utils/cloudinary"
+import { uploadToCloudinary, deleteFromCloudinary } from "@/utils/cloudinary"
 import { HeroCarousel } from "@/components/hero-carousel"
 import { BulkUpload } from "@/components/bulk-upload"
 import { Trash2, Plus } from "lucide-react"
@@ -100,12 +100,31 @@ export default function HeroPage() {
 
     setUploading(true)
     try {
+      // First, get the current media item to get the old URL
+      const { data: currentMedia, error: fetchError } = await supabase
+        .from("hero_media")
+        .select("url")
+        .eq("id", mediaId)
+        .single()
+
+      if (fetchError) throw fetchError
+
       const url = await uploadToCloudinary(file)
       const type = file.type.startsWith("video/") ? "video" : "image"
 
       const { error } = await supabase.from("hero_media").update({ url, type }).eq("id", mediaId)
 
       if (error) throw error
+
+      // Delete the old image from Cloudinary if it exists
+      if (currentMedia?.url) {
+        try {
+          await deleteFromCloudinary(currentMedia.url)
+        } catch (cloudinaryError) {
+          console.error('Failed to delete old image from Cloudinary:', cloudinaryError)
+          // Don't fail the entire operation if Cloudinary deletion fails
+        }
+      }
 
       toast({
         title: "Success",
@@ -182,9 +201,29 @@ export default function HeroPage() {
 
   const deleteMedia = async (id: string) => {
     try {
+      // First, get the media item to get the URL
+      const { data: mediaItem, error: fetchError } = await supabase
+        .from("hero_media")
+        .select("url")
+        .eq("id", id)
+        .single()
+
+      if (fetchError) throw fetchError
+
+      // Delete from database
       const { error } = await supabase.from("hero_media").delete().eq("id", id)
 
       if (error) throw error
+
+      // Delete from Cloudinary if URL exists
+      if (mediaItem?.url) {
+        try {
+          await deleteFromCloudinary(mediaItem.url)
+        } catch (cloudinaryError) {
+          console.error('Failed to delete from Cloudinary:', cloudinaryError)
+          // Don't fail the entire operation if Cloudinary deletion fails
+        }
+      }
 
       toast({
         title: "Success",

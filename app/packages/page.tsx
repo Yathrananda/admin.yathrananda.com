@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/ui/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/utils/supabase/client"
-import { uploadToCloudinary } from "@/utils/cloudinary"
+import { uploadToCloudinary, deleteMultipleFromCloudinary } from "@/utils/cloudinary"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -164,6 +164,16 @@ export default function PackagesPage() {
       // Upload main package image if provided
       if (formData.image) {
         mainImageUrl = await uploadToCloudinary(formData.image)
+      }
+
+      // Delete images that were removed from the form
+      if (formData.deletedImages && formData.deletedImages.length > 0) {
+        try {
+          await deleteMultipleFromCloudinary(formData.deletedImages)
+        } catch (cloudinaryError) {
+          console.error('Failed to delete removed images from Cloudinary:', cloudinaryError)
+          // Don't fail the entire operation if Cloudinary deletion fails
+        }
       }
 
       // Create or update the main package
@@ -340,8 +350,62 @@ export default function PackagesPage() {
 
   const deletePackage = async (id: string) => {
     try {
+      // First, get all images associated with this package
+      const imageUrls: string[] = []
+
+      // Get package main image
+      const { data: packageData } = await supabase
+        .from("travel_packages")
+        .select("image_url, hero_image_url")
+        .eq("id", id)
+        .single()
+
+      if (packageData?.image_url) imageUrls.push(packageData.image_url)
+      if (packageData?.hero_image_url && packageData.hero_image_url !== packageData.image_url) {
+        imageUrls.push(packageData.hero_image_url)
+      }
+
+      // Get itinerary images
+      const { data: itineraryData } = await supabase
+        .from("itinerary")
+        .select("id")
+        .eq("package_id", id)
+
+      if (itineraryData && itineraryData.length > 0) {
+        const itineraryIds = itineraryData.map(item => item.id)
+        const { data: itineraryImages } = await supabase
+          .from("itinerary_images")
+          .select("url")
+          .in("itinerary_id", itineraryIds)
+
+        if (itineraryImages) {
+          imageUrls.push(...itineraryImages.map(img => img.url))
+        }
+      }
+
+      // Get gallery images
+      const { data: galleryImages } = await supabase
+        .from("package_gallery")
+        .select("url")
+        .eq("package_id", id)
+
+      if (galleryImages) {
+        imageUrls.push(...galleryImages.map(img => img.url))
+      }
+
+      // Delete from database (this will cascade delete related records)
       const { error } = await supabase.from("travel_packages").delete().eq("id", id)
       if (error) throw error
+
+      // Delete all images from Cloudinary
+      if (imageUrls.length > 0) {
+        try {
+          await deleteMultipleFromCloudinary(imageUrls)
+        } catch (cloudinaryError) {
+          console.error('Failed to delete images from Cloudinary:', cloudinaryError)
+          // Don't fail the entire operation if Cloudinary deletion fails
+        }
+      }
 
       toast({
         title: "Success",
