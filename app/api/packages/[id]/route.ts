@@ -40,61 +40,121 @@ export async function GET(
       )
     }
 
-    // Get related data
-    const [
-      { data: itinerary },
-      { data: gallery },
-      { data: bookingRules },
-      { data: cancellationRules }
-    ] = await Promise.all([
-      supabase
-        .from('package_itinerary')
-        .select('*')
-        .eq('package_id', id)
-        .order('display_order', { ascending: true }),
-      supabase
-        .from('package_gallery')
-        .select('*')
-        .eq('package_id', id)
-        .order('display_order', { ascending: true }),
-      supabase
-        .from('package_booking_rules')
-        .select('*')
-        .eq('package_id', id)
-        .order('display_order', { ascending: true }),
-      supabase
-        .from('package_cancellation_rules')
-        .select('*')
-        .eq('package_id', id)
-        .order('display_order', { ascending: true })
-    ])
+    // Get related data with error handling
+    let itinerary: any[] = []
+    let gallery: any[] = []
+    let bookingRules: any[] = []
+    let cancellationRules: any[] = []
+    let packageTestimonials: Array<{ testimonial_id: string }> = []
 
-    // Get activities and images for each itinerary day
-    const itineraryWithDetails = await Promise.all(
-      (itinerary || []).map(async (day) => {
-        const [{ data: activities }, { data: images }] = await Promise.all([
-          supabase
-            .from('itinerary_activities')
-            .select('*')
-            .eq('itinerary_id', day.id)
-            .order('display_order', { ascending: true }),
-          supabase
-            .from('itinerary_images')
-            .select('*')
-            .eq('itinerary_id', day.id)
-            .order('display_order', { ascending: true })
-        ])
+    try {
+      const [
+        { data: itineraryData, error: itineraryError },
+        { data: galleryData, error: galleryError },
+        { data: bookingRulesData, error: bookingRulesError },
+        { data: cancellationRulesData, error: cancellationRulesError },
+        { data: packageTestimonialsData, error: packageTestimonialsError }
+      ] = await Promise.all([
+        supabase
+          .from('package_itinerary')
+          .select('*')
+          .eq('package_id', id)
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('package_gallery')
+          .select('*')
+          .eq('package_id', id)
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('package_booking_rules')
+          .select('*')
+          .eq('package_id', id)
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('package_cancellation_rules')
+          .select('*')
+          .eq('package_id', id)
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('package_testimonials')
+          .select('testimonial_id')
+          .eq('package_id', id)
+      ])
 
-        return {
-          ...day,
-          activities: activities?.map((a) => a.activity) || [],
-          images: images?.map(img => ({
-            url: img.url,
-            alt: img.alt || ''
-          })) || []
+      // Handle each result individually to prevent one error from breaking everything
+      if (!itineraryError && itineraryData) itinerary = itineraryData
+      if (!galleryError && galleryData) gallery = galleryData
+      if (!bookingRulesError && bookingRulesData) bookingRules = bookingRulesData
+      if (!cancellationRulesError && cancellationRulesData) cancellationRules = cancellationRulesData
+      if (!packageTestimonialsError && packageTestimonialsData) packageTestimonials = packageTestimonialsData
+
+    } catch (relatedDataError) {
+      console.warn('Error fetching related data for package:', id, relatedDataError)
+    }
+
+    let itineraryWithDetails: any[] = []
+    try {
+      itineraryWithDetails = await Promise.all(
+        (itinerary || []).map(async (day) => {
+          try {
+            const [{ data: activities }, { data: images }] = await Promise.all([
+              supabase
+                .from('itinerary_activities')
+                .select('*')
+                .eq('itinerary_id', day.id)
+                .order('display_order', { ascending: true }),
+              supabase
+                .from('itinerary_images')
+                .select('*')
+                .eq('itinerary_id', day.id)
+                .order('display_order', { ascending: true })
+            ])
+
+            return {
+              ...day,
+              activities: activities?.map((a) => a.activity) || [],
+              images: images?.map(img => ({
+                url: img.url,
+                alt: img.alt || ''
+              })) || []
+            }
+          } catch (dayError) {
+            console.warn('Error fetching details for itinerary day:', day.id, dayError)
+            // Return basic day info if details fail
+            return {
+              ...day,
+              activities: [],
+              images: []
+            }
+          }
+        })
+      )
+    } catch (itineraryDetailsError) {
+      console.warn('Error fetching itinerary details for package:', id, itineraryDetailsError)
+      itineraryWithDetails = itinerary || []
+    }
+
+    let testimonials: Array<{
+      id: string
+      client_name: string
+      message: string
+      image_url?: string
+    }> = []
+    if (packageTestimonials && packageTestimonials.length > 0) {
+      try {
+        const testimonialIds = packageTestimonials.map(pt => pt.testimonial_id)
+        const { data: testimonialData, error: testimonialError } = await supabase
+          .from('testimonials')
+          .select('id, client_name, message, image_url')
+          .in('id', testimonialIds)
+        
+        if (!testimonialError && testimonialData) {
+          testimonials = testimonialData
         }
-      })
-    )
+      } catch (testimonialFetchError) {
+        console.warn('Failed to fetch testimonials for package:', id, testimonialFetchError)
+      }
+    }
 
     const packageWithDetails = {
       ...packageData,
@@ -111,7 +171,8 @@ export async function GET(
       },
       cancellationPolicy: {
         rules: cancellationRules?.map((r) => r.rule) || []
-      }
+      },
+      testimonials: testimonials
     }
 
     return NextResponse.json({ 
