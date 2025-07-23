@@ -115,6 +115,14 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
 
     // Testimonials
     testimonials: initialData?.testimonials?.map((t: any) => t.id) || [],
+
+    // Inclusions & Exclusions
+    inclusions: Array.isArray(initialData?.inclusions) 
+      ? initialData.inclusions
+      : [""],
+    exclusions: Array.isArray(initialData?.exclusions) 
+      ? initialData.exclusions
+      : [""],
   })
 
   useEffect(() => {
@@ -241,10 +249,11 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
+          <TabsTrigger value="inclusions">Inclusions</TabsTrigger>
           <TabsTrigger value="booking">Booking</TabsTrigger>
           <TabsTrigger value="cancellation">Cancellation</TabsTrigger>
           <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
@@ -762,6 +771,116 @@ export function PackageForm({ initialData, onSubmit, isLoading }: PackageFormPro
           >
             <Plus className="h-4 w-4 mr-2" /> Add Image
           </Button>
+        </TabsContent>
+
+        <TabsContent value="inclusions" className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <Label className="text-lg font-semibold">What's Included</Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                List all the items, services, and amenities included in this package
+              </p>
+              {formData.inclusions.map((inclusion: string, index: number) => (
+                <div key={index} className="flex gap-2 mt-2">
+                  <Input
+                    value={inclusion}
+                    placeholder="e.g., Accommodation in 4-star hotels"
+                    onChange={(e) => {
+                      const newInclusions = [...formData.inclusions]
+                      newInclusions[index] = e.target.value
+                      setFormData({
+                        ...formData,
+                        inclusions: newInclusions
+                      })
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      const newInclusions = formData.inclusions.filter(
+                        (_: any, i: number) => i !== index
+                      )
+                      setFormData({
+                        ...formData,
+                        inclusions: newInclusions.length ? newInclusions : [""]
+                      })
+                    }}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    inclusions: [...formData.inclusions, ""]
+                  })
+                }
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Inclusion
+              </Button>
+            </div>
+
+            <div>
+              <Label className="text-lg font-semibold">What's Excluded</Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                List all the items, services, and costs not included in this package
+              </p>
+              {formData.exclusions.map((exclusion: string, index: number) => (
+                <div key={index} className="flex gap-2 mt-2">
+                  <Input
+                    value={exclusion}
+                    placeholder="e.g., International flights"
+                    onChange={(e) => {
+                      const newExclusions = [...formData.exclusions]
+                      newExclusions[index] = e.target.value
+                      setFormData({
+                        ...formData,
+                        exclusions: newExclusions
+                      })
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      const newExclusions = formData.exclusions.filter(
+                        (_: any, i: number) => i !== index
+                      )
+                      setFormData({
+                        ...formData,
+                        exclusions: newExclusions.length ? newExclusions : [""]
+                      })
+                    }}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    exclusions: [...formData.exclusions, ""]
+                  })
+                }
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Exclusion
+              </Button>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="booking" className="space-y-4">

@@ -96,7 +96,9 @@ Response:
     },
     "cancellationPolicy": {
       "rules": ["string"]
-    }
+    },
+    "inclusions": ["string"],
+    "exclusions": ["string"]
   }
 }
 ```

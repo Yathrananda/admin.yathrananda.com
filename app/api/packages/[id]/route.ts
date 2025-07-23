@@ -45,6 +45,8 @@ export async function GET(
     let gallery: any[] = []
     let bookingRules: any[] = []
     let cancellationRules: any[] = []
+    let inclusions: any[] = []
+    let exclusions: any[] = []
     let packageTestimonials: Array<{ testimonial_id: string }> = []
 
     try {
@@ -53,6 +55,8 @@ export async function GET(
         { data: galleryData, error: galleryError },
         { data: bookingRulesData, error: bookingRulesError },
         { data: cancellationRulesData, error: cancellationRulesError },
+        { data: inclusionsData, error: inclusionsError },
+        { data: exclusionsData, error: exclusionsError },
         { data: packageTestimonialsData, error: packageTestimonialsError }
       ] = await Promise.all([
         supabase
@@ -76,6 +80,16 @@ export async function GET(
           .eq('package_id', id)
           .order('display_order', { ascending: true }),
         supabase
+          .from('package_inclusions')
+          .select('*')
+          .eq('package_id', id)
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('package_exclusions')
+          .select('*')
+          .eq('package_id', id)
+          .order('display_order', { ascending: true }),
+        supabase
           .from('package_testimonials')
           .select('testimonial_id')
           .eq('package_id', id)
@@ -86,6 +100,8 @@ export async function GET(
       if (!galleryError && galleryData) gallery = galleryData
       if (!bookingRulesError && bookingRulesData) bookingRules = bookingRulesData
       if (!cancellationRulesError && cancellationRulesData) cancellationRules = cancellationRulesData
+      if (!inclusionsError && inclusionsData) inclusions = inclusionsData
+      if (!exclusionsError && exclusionsData) exclusions = exclusionsData
       if (!packageTestimonialsError && packageTestimonialsData) packageTestimonials = packageTestimonialsData
 
     } catch (relatedDataError) {
@@ -172,6 +188,8 @@ export async function GET(
       cancellationPolicy: {
         rules: cancellationRules?.map((r) => r.rule) || []
       },
+      inclusions: inclusions?.map((inc) => inc.inclusion) || [],
+      exclusions: exclusions?.map((exc) => exc.exclusion) || [],
       testimonials: testimonials
     }
 

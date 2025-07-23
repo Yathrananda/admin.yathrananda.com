@@ -65,6 +65,8 @@ interface TravelPackage {
   cancellationPolicy?: {
     rules: string[]
   }
+  inclusions?: string[]
+  exclusions?: string[]
   testimonials?: Array<{
     id: string
     client_name: string
@@ -103,12 +105,16 @@ export default function PackagesPage() {
             { data: gallery },
             { data: bookingRules },
             { data: cancellationRules },
+            { data: inclusions },
+            { data: exclusions },
             { data: packageTestimonials },
           ] = await Promise.all([
             supabase.from("package_itinerary").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
             supabase.from("package_gallery").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
             supabase.from("package_booking_rules").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
             supabase.from("package_cancellation_rules").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
+            supabase.from("package_inclusions").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
+            supabase.from("package_exclusions").select("*").eq("package_id", pkg.id).order('display_order', { ascending: true }),
             supabase.from("package_testimonials").select("testimonial_id").eq("package_id", pkg.id),
           ])
 
@@ -163,6 +169,8 @@ export default function PackagesPage() {
             cancellationPolicy: {
               rules: cancellationRules?.map((r) => r.rule) || [""],
             },
+            inclusions: inclusions?.map((inc) => inc.inclusion) || [],
+            exclusions: exclusions?.map((exc) => exc.exclusion) || [],
             testimonials: testimonials
           }
         })
@@ -253,6 +261,8 @@ export default function PackagesPage() {
             supabase.from("package_gallery").delete().eq("package_id", packageId),
             supabase.from("package_booking_rules").delete().eq("package_id", packageId),
             supabase.from("package_cancellation_rules").delete().eq("package_id", packageId),
+            supabase.from("package_inclusions").delete().eq("package_id", packageId),
+            supabase.from("package_exclusions").delete().eq("package_id", packageId),
             supabase.from("package_testimonials").delete().eq("package_id", packageId),
           ])
         }
@@ -351,6 +361,40 @@ export default function PackagesPage() {
               }))
             )
           if (cancellationRulesError) throw cancellationRulesError
+        }
+
+        // Insert inclusions
+        if (formData.inclusions && formData.inclusions.length > 0) {
+          const filteredInclusions = formData.inclusions.filter((inclusion: string) => inclusion.trim() !== "")
+          if (filteredInclusions.length > 0) {
+            const { error: inclusionsError } = await supabase
+              .from("package_inclusions")
+              .insert(
+                filteredInclusions.map((inclusion: string, index: number) => ({
+                  package_id: packageId,
+                  inclusion,
+                  display_order: index,
+                }))
+              )
+            if (inclusionsError) throw inclusionsError
+          }
+        }
+
+        // Insert exclusions
+        if (formData.exclusions && formData.exclusions.length > 0) {
+          const filteredExclusions = formData.exclusions.filter((exclusion: string) => exclusion.trim() !== "")
+          if (filteredExclusions.length > 0) {
+            const { error: exclusionsError } = await supabase
+              .from("package_exclusions")
+              .insert(
+                filteredExclusions.map((exclusion: string, index: number) => ({
+                  package_id: packageId,
+                  exclusion,
+                  display_order: index,
+                }))
+              )
+            if (exclusionsError) throw exclusionsError
+          }
         }
 
         // Insert package testimonials
@@ -481,7 +525,7 @@ export default function PackagesPage() {
               Add Package
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingPackage ? "Edit Package" : "Add New Package"}</DialogTitle>
             </DialogHeader>
