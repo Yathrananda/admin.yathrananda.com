@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/ui/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/utils/supabase/client"
-import { uploadToCloudinary, deleteFromCloudinary } from "@/utils/cloudinary"
+import { uploadToS3, deleteFromS3 } from "@/utils/s3"
 import { HeroCarousel } from "@/components/hero-carousel"
 import { BulkUpload } from "@/components/bulk-upload"
 import { Trash2, Plus } from "lucide-react"
@@ -61,7 +61,7 @@ export default function HeroPage() {
     setUploading(true)
     try {
       const uploadPromises = files.map(async (file) => {
-        const url = await uploadToCloudinary(file)
+        const url = await uploadToS3(file, 'hero')
         const type = file.type.startsWith("video/") ? "video" : "image"
         return { url, type }
       })
@@ -110,20 +110,20 @@ export default function HeroPage() {
 
       if (fetchError) throw fetchError
 
-      const url = await uploadToCloudinary(file)
+      const url = await uploadToS3(file, 'hero')
       const type = file.type.startsWith("video/") ? "video" : "image"
 
       const { error } = await supabase.from("hero_media").update({ url, type }).eq("id", mediaId)
 
       if (error) throw error
 
-      // Delete the old image from Cloudinary if it exists
+      // Delete the old image from S3 if it exists
       if (currentMedia?.url) {
         try {
-          await deleteFromCloudinary(currentMedia.url)
-        } catch (cloudinaryError) {
-          console.error('Failed to delete old image from Cloudinary:', cloudinaryError)
-          // Don't fail the entire operation if Cloudinary deletion fails
+          await deleteFromS3(currentMedia.url)
+        } catch (s3Error) {
+          console.error('Failed to delete old image from S3:', s3Error)
+          // Don't fail the entire operation if S3 deletion fails
         }
       }
 
@@ -217,13 +217,13 @@ export default function HeroPage() {
 
       if (error) throw error
 
-      // Delete from Cloudinary if URL exists
+      // Delete from S3 if URL exists
       if (mediaItem?.url) {
         try {
-          await deleteFromCloudinary(mediaItem.url)
-        } catch (cloudinaryError) {
-          console.error('Failed to delete from Cloudinary:', cloudinaryError)
-          // Don't fail the entire operation if Cloudinary deletion fails
+          await deleteFromS3(mediaItem.url)
+        } catch (s3Error) {
+          console.error('Failed to delete from S3:', s3Error)
+          // Don't fail the entire operation if S3 deletion fails
         }
       }
 

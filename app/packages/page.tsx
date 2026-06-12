@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageHeader } from "@/components/ui/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/utils/supabase/client"
-import { uploadToCloudinary, deleteMultipleFromCloudinary } from "@/utils/cloudinary"
+import { uploadToS3, deleteMultipleFromS3 } from "@/utils/s3"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -196,16 +196,16 @@ export default function PackagesPage() {
 
       // Upload main package image if provided
       if (formData.image) {
-        mainImageUrl = await uploadToCloudinary(formData.image)
+        mainImageUrl = await uploadToS3(formData.image, 'packages')
       }
 
       // Delete images that were removed from the form
       if (formData.deletedImages && formData.deletedImages.length > 0) {
         try {
-          await deleteMultipleFromCloudinary(formData.deletedImages)
-        } catch (cloudinaryError) {
-          console.error('Failed to delete removed images from Cloudinary:', cloudinaryError)
-          // Don't fail the entire operation if Cloudinary deletion fails
+          await deleteMultipleFromS3(formData.deletedImages)
+        } catch (s3Error) {
+          console.error('Failed to delete removed images from S3:', s3Error)
+          // Don't fail the entire operation if S3 deletion fails
         }
       }
 
@@ -302,7 +302,7 @@ export default function PackagesPage() {
                 day.images.map(async (img: { file: File | null, url?: string, alt: string }) => {
                   let imageUrl = img.url
                   if (img.file) {
-                    imageUrl = await uploadToCloudinary(img.file)
+                    imageUrl = await uploadToS3(img.file, 'packages')
                   }
                   return {
                     itinerary_id: itineraryDay.id,
@@ -324,7 +324,7 @@ export default function PackagesPage() {
             formData.gallery.map(async (img: { file: File | null, url?: string, alt: string, caption: string }) => {
               let imageUrl = img.url
               if (img.file) {
-                imageUrl = await uploadToCloudinary(img.file)
+                imageUrl = await uploadToS3(img.file, 'packages')
               }
               return {
                 package_id: packageId,
@@ -480,13 +480,13 @@ export default function PackagesPage() {
       const { error } = await supabase.from("travel_packages").delete().eq("id", id)
       if (error) throw error
 
-      // Delete all images from Cloudinary
+      // Delete all images from S3
       if (imageUrls.length > 0) {
         try {
-          await deleteMultipleFromCloudinary(imageUrls)
-        } catch (cloudinaryError) {
-          console.error('Failed to delete images from Cloudinary:', cloudinaryError)
-          // Don't fail the entire operation if Cloudinary deletion fails
+          await deleteMultipleFromS3(imageUrls)
+        } catch (s3Error) {
+          console.error('Failed to delete images from S3:', s3Error)
+          // Don't fail the entire operation if S3 deletion fails
         }
       }
 

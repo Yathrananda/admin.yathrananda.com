@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/ui/page-header"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/utils/supabase/client"
-import { uploadToCloudinary, deleteFromCloudinary } from "@/utils/cloudinary"
+import { uploadToS3, deleteFromS3 } from "@/utils/s3"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -100,7 +100,7 @@ export default function TestimonialsPage() {
       }
 
       if (formData.image) {
-        imageUrl = await uploadToCloudinary(formData.image)
+        imageUrl = await uploadToS3(formData.image, 'testimonials')
       }
 
       const testimonialData = {
@@ -114,13 +114,13 @@ export default function TestimonialsPage() {
 
         if (error) throw error
 
-        // Delete the old image from Cloudinary if it was replaced
+        // Delete the old image from S3 if it was replaced
         if (oldImageUrl) {
           try {
-            await deleteFromCloudinary(oldImageUrl)
-          } catch (cloudinaryError) {
-            console.error('Failed to delete old image from Cloudinary:', cloudinaryError)
-            // Don't fail the entire operation if Cloudinary deletion fails
+            await deleteFromS3(oldImageUrl)
+          } catch (s3Error) {
+            console.error('Failed to delete old image from S3:', s3Error)
+            // Don't fail the entire operation if S3 deletion fails
           }
         }
       } else {
@@ -164,13 +164,13 @@ export default function TestimonialsPage() {
 
       if (error) throw error
 
-      // Delete image from Cloudinary if it exists
+      // Delete image from S3 if it exists
       if (testimonial?.image_url) {
         try {
-          await deleteFromCloudinary(testimonial.image_url)
-        } catch (cloudinaryError) {
-          console.error('Failed to delete image from Cloudinary:', cloudinaryError)
-          // Don't fail the entire operation if Cloudinary deletion fails
+          await deleteFromS3(testimonial.image_url)
+        } catch (s3Error) {
+          console.error('Failed to delete image from S3:', s3Error)
+          // Don't fail the entire operation if S3 deletion fails
         }
       }
 
